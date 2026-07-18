@@ -129,15 +129,26 @@ class MainWindow(ctk.CTk):
         self._table = DataTable(table_frame)
         self._table.pack(fill="both", expand=True, padx=4, pady=4)
 
-        # ── Row 5: Generate button ─────────────────────────────────────
+        # ── Row 5: Action buttons ───────────────────────────────────
+        btn_row = ctk.CTkFrame(self, fg_color="transparent")
+        btn_row.pack(fill="x", padx=12, pady=10)
+
         self._gen_btn = ctk.CTkButton(
-            self,
+            btn_row,
             text="Generate Consolidate Settlements",
             height=40,
             font=ctk.CTkFont(size=14, weight="bold"),
             command=self._on_generate,
         )
-        self._gen_btn.pack(fill="x", padx=12, pady=10)
+        self._gen_btn.pack(side="left", fill="x", expand=True, padx=(0, 6))
+
+        ctk.CTkButton(
+            btn_row,
+            text="Open Output Folder",
+            height=40,
+            width=160,
+            command=self._open_output_folder,
+        ).pack(side="left")
 
     # ------------------------------------------------------------------
     # State save / restore
@@ -404,6 +415,26 @@ class MainWindow(ctk.CTk):
 
     # ------------------------------------------------------------------
     # Close
+    def _open_output_folder(self) -> None:
+        """Open the most recently created timestamped output sub-folder."""
+        import os, subprocess
+        base = Path(__file__).resolve().parents[3]
+        output_root = Path(self._cfg.get("output_folder", "") or base / "data" / "output")
+
+        if not output_root.exists():
+            messagebox.showwarning("Output Folder", "Output folder does not exist yet.")
+            return
+
+        # Find sub-folders sorted by name descending (YYYY-MM-DD HH-MM format
+        # sorts lexicographically = chronologically)
+        sub_folders = sorted(
+            (p for p in output_root.iterdir() if p.is_dir()),
+            reverse=True,
+        )
+
+        target = sub_folders[0] if sub_folders else output_root
+        os.startfile(str(target))
+
     # ------------------------------------------------------------------
 
     def _on_close(self) -> None:
