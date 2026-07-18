@@ -34,8 +34,8 @@ class MainWindow(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
         self.title("Settlement Form Generator")
-        self.geometry("900x720")
-        self.minsize(800, 600)
+        self.geometry("840x580")
+        self.minsize(760, 480)
 
         self._cfg = settings.load()
         self._raw_df: pd.DataFrame | None = None
@@ -50,30 +50,30 @@ class MainWindow(ctk.CTk):
     # ------------------------------------------------------------------
 
     def _build_ui(self) -> None:
-        pad = {"padx": 12, "pady": 6}
+        pad = {"padx": 8, "pady": 4}
 
         # ── Row 0: Input Excel ──────────────────────────────────────────
         row0 = ctk.CTkFrame(self, fg_color="transparent")
         row0.pack(fill="x", **pad)
 
-        ctk.CTkLabel(row0, text="Input Excel:", width=110, anchor="w").pack(
+        ctk.CTkLabel(row0, text="Input Excel:", width=90, anchor="w").pack(
             side="left")
         self._excel_var = ctk.StringVar()
         ctk.CTkEntry(row0, textvariable=self._excel_var,
-                     width=560, placeholder_text="Path to input Excel file…").pack(
-            side="left", padx=(0, 8))
-        ctk.CTkButton(row0, text="Browse", width=80,
+                     width=540, placeholder_text="Path to input Excel file…").pack(
+            side="left", padx=(0, 6))
+        ctk.CTkButton(row0, text="Browse", width=70,
                       command=self._browse_excel).pack(side="left")
 
         # ── Row 1: Sub-Category filter ─────────────────────────────────
         row1 = ctk.CTkFrame(self, fg_color="transparent")
         row1.pack(fill="x", **pad)
 
-        ctk.CTkLabel(row1, text="Sub-Category:", width=110, anchor="w").pack(
+        ctk.CTkLabel(row1, text="Sub-Category:", width=90, anchor="w").pack(
             side="left")
         self._subcat_widget = DropdownChecklist(
             row1, options=[], on_change=self._on_filter_change,
-            placeholder="Load an Excel file first…", width=300)
+            placeholder="Load an Excel file first…", width=240)
         self._subcat_widget.pack(side="left")
 
         # ── Row 2: Status filter ───────────────────────────────────────
@@ -92,7 +92,7 @@ class MainWindow(ctk.CTk):
         self._status_label = ctk.CTkLabel(row2, text="  Status:", anchor="w")
         self._status_widget = DropdownChecklist(
             row2, options=[], on_change=self._on_filter_change,
-            placeholder="Load an Excel file first…", width=260)
+            placeholder="Load an Excel file first…", width=200)
         # Hidden by default
         self._status_label.pack_forget()
         self._status_widget.pack_forget()

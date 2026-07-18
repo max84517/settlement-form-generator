@@ -15,7 +15,7 @@ import pandas as pd
 
 
 _HEADERS = ["Sub-Category", "GTK Supplier", "Platform", "Actual Payment"]
-_COL_WIDTHS = [150, 160, 160, 120]
+_COL_WIDTHS = [130, 130, 190, 100]
 
 
 class DataTable(ctk.CTkFrame):
