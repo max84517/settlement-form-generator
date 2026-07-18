@@ -1,0 +1,54 @@
+# .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment (Poetry in-project)
+.venv/
+
+# Poetry lock is committed; ignore only the local config
+poetry.toml
+
+# App runtime config (stores user paths / UI state)
+config.json
+
+# ── Data folders ────────────────────────────────────────────────────────────
+# Keep the folder structure but ignore generated/user files inside them
+
+# Input: merged settlement data written at runtime
+data/input/*
+!data/input/.gitkeep
+
+# Output: generated Word contracts
+data/output/*
+!data/output/.gitkeep
+
+# Settlement info Excel (contains supplier data – keep out of repo)
+data/settlement info/*
+!data/settlement info/.gitkeep
+
+# Template: Word template file (large binary; distribute separately)
+# Comment out the next two lines if you DO want to commit the template.
+data/template/*
+!data/template/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+.idea/
+.vscode/
+*.code-workspace
+
+# Logs / temp
+*.log
+*.tmp
