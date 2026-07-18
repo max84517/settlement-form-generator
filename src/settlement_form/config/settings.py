@@ -8,7 +8,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-_CONFIG_PATH = Path(__file__).resolve().parents[3] / "config.json"
+from settlement_form.utils.paths import get_app_root
+
+_CONFIG_PATH = get_app_root() / "config.json"
 
 _DEFAULTS: dict[str, Any] = {
     "input_excel_path": "",

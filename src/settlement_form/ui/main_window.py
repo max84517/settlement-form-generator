@@ -26,6 +26,7 @@ from settlement_form.ui.icertis_dialog import IcertisDialog, collect_supplier_ke
 from settlement_form.ui.quarter_dialog import QuarterDialog
 from settlement_form.ui.widgets.data_table import DataTable
 from settlement_form.ui.widgets.dropdown_checklist import DropdownChecklist
+from settlement_form.utils.paths import get_app_root
 
 _STATUS_2ND_VER = "2nd Ver Complete"
 
@@ -306,8 +307,7 @@ class MainWindow(ctk.CTk):
         si_path = self._cfg.get("settlement_info_path", "")
         if not si_path or not Path(si_path).exists():
             # Try default location
-            base = Path(__file__).resolve().parents[3]
-            default = base / "data" / "settlement info" / "settlement info.xlsx"
+            default = get_app_root() / "data" / "settlement info" / "settlement info.xlsx"
             if default.exists():
                 si_path = str(default)
             else:
@@ -335,7 +335,7 @@ class MainWindow(ctk.CTk):
             messagebox.showerror("Merge Error", str(exc))
             return
 
-        base = Path(__file__).resolve().parents[3]
+        base = get_app_root()
         input_folder = base / "data" / "input"
         input_folder.mkdir(parents=True, exist_ok=True)
         try:
@@ -353,7 +353,7 @@ class MainWindow(ctk.CTk):
                 template_path = candidates[0]
 
         if template_path is None:
-            default_tmpl = base / "data" / "template"
+            default_tmpl = get_app_root() / "data" / "template"
             candidates = list(default_tmpl.glob("*.docx"))
             if candidates:
                 template_path = candidates[0]
@@ -370,7 +370,7 @@ class MainWindow(ctk.CTk):
         # ── Step 6: Determine output folder ───────────────────────────
         output_folder = self._cfg.get("output_folder", "")
         if not output_folder:
-            output_folder = str(base / "data" / "output")
+            output_folder = str(get_app_root() / "data" / "output")
 
         # ── Step 7: Generate contracts (in a thread to keep UI alive) ──
         self._gen_btn.configure(state="disabled", text="Generating…")
@@ -417,9 +417,8 @@ class MainWindow(ctk.CTk):
     # Close
     def _open_output_folder(self) -> None:
         """Open the most recently created timestamped output sub-folder."""
-        import os, subprocess
-        base = Path(__file__).resolve().parents[3]
-        output_root = Path(self._cfg.get("output_folder", "") or base / "data" / "output")
+        import os
+        output_root = Path(self._cfg.get("output_folder", "") or get_app_root() / "data" / "output")
 
         if not output_root.exists():
             messagebox.showwarning("Output Folder", "Output folder does not exist yet.")

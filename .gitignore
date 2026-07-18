@@ -51,3 +51,12 @@ desktop.ini
 # Logs / temp
 *.log
 *.tmp
+
+# PyInstaller
+*.spec
+build/
+dist/
+build_exe.bat
+
+# Release zip
+SettlementFormGenerator.zip
