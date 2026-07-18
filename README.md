@@ -3,6 +3,17 @@
 A desktop application that automatically generates Word settlement contracts from Excel data.  
 Built with Python 3.11+, Poetry, customtkinter (dark mode), and python-docx.
 
+**[⬇ Download latest release (Windows .exe)](https://github.com/max84517/settlement-form-generator/releases/latest)**
+
+---
+
+## Quick Start (no Python required)
+
+1. Go to [Releases](https://github.com/max84517/settlement-form-generator/releases/latest) and download `SettlementFormGenerator-v*.zip`
+2. **Extract to a local folder** (avoid OneDrive / network paths — spaces in the path can cause issues)
+3. Run `SettlementFormGenerator\SettlementFormGenerator.exe`
+4. The `data\` folder ships with the Word template and settlement info pre-loaded
+
 ---
 
 ## Features
@@ -51,37 +62,41 @@ settlement-form-generator/
 
 ---
 
-## Setup
+## Setup (from source)
 
 ### Prerequisites
 
 - Python 3.11 or later
 - [Poetry](https://python-poetry.org/docs/#installation) 1.8+
 
-### Install
+### Install & run
 
 ```bash
 git clone https://github.com/max84517/settlement-form-generator.git
 cd settlement-form-generator
 poetry install
-```
-
-### Run
-
-```bash
 poetry run python -m settlement_form.main
 ```
+
+### Build executable
+
+```bat
+build_exe.bat
+```
+
+Builds to `C:\Temp\SFGen\` (avoids OneDrive path issues), then copies the result to `dist\` and creates `SettlementFormGenerator.zip` ready for release.
 
 ---
 
 ## Data Files
 
-Place the following files before running (these are **not** committed to the repo):
+The `data\` folder ships with the template and settlement info already in place.  
+If you need to update them:
 
 | File | Location | Description |
 |------|----------|-------------|
-| Contract template | `data/template/<any name>.docx` | Word template with plain-text keywords (see below) |
-| Settlement info | `data/settlement info/settlement info.xlsx` | ICM party / signatory data per supplier |
+| Contract template | `data\template\<any name>.docx` | Word template with plain-text keywords (see below) |
+| Settlement info | `data\settlement info\settlement info.xlsx` | ICM party / signatory data per supplier |
 
 ### Input Excel (selected via UI)
 
