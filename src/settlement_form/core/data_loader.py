@@ -61,6 +61,18 @@ def load_input_excel(path: str | Path) -> pd.DataFrame:
     df["GBU"] = df["GBU"].fillna("").astype(str).str.strip()
     df["_gbu_norm"] = df["GBU"].apply(_extract_gbu)
 
+    # Canonicalise GTK Supplier: build a map from normalised name (lowercase,
+    # no spaces) → first occurrence in the file.  This ensures "Liteon" and
+    # "LiteOn" resolve to whichever spelling appears first, keeping one
+    # consistent key throughout the pipeline.
+    supplier_raw = df["GTK Supplier"].fillna("").astype(str).str.strip()
+    norm_series = supplier_raw.str.lower().str.replace(" ", "", regex=False)
+    canonical_map: dict[str, str] = {}
+    for raw, norm in zip(supplier_raw, norm_series):
+        if norm not in canonical_map:
+            canonical_map[norm] = raw
+    df["_canonical_supplier"] = norm_series.map(canonical_map)
+
     # Build a supplier key that already accounts for Chicony NB/DT split
     df["_supplier_key"] = df.apply(_build_supplier_key, axis=1)
 
@@ -79,9 +91,9 @@ def _extract_gbu(raw: str) -> str:
 def _build_supplier_key(row: pd.Series) -> str:
     """
     For Chicony: 'Chicony - NB' or 'Chicony - DT'.
-    For everyone else: GTK Supplier name as-is.
+    For everyone else: canonical GTK Supplier name (first occurrence's casing).
     """
-    supplier = str(row["GTK Supplier"]).strip()
+    supplier = str(row["_canonical_supplier"]).strip()
     if supplier.lower() == "chicony":
         gbu_norm = row["_gbu_norm"]
         return f"Chicony - {gbu_norm}"
