@@ -318,8 +318,13 @@ def _to_date_str(val: Any) -> str:
     from datetime import datetime, date as _date
     import pandas as _pd
 
-    if _pd.isna(val) if not isinstance(val, str) else False:
-        return ""
+    # pd.isna() handles NaN, NaT, and None; wrap in try for exotic types
+    try:
+        if _pd.isna(val):
+            return ""
+    except (TypeError, ValueError):
+        pass
+
     if isinstance(val, str) and not val.strip():
         return ""
 
@@ -327,9 +332,13 @@ def _to_date_str(val: Any) -> str:
     if isinstance(val, (_date, datetime)):
         dt = val
     else:
-        import pandas as _pd2
         try:
-            dt = _pd2.Timestamp(val).to_pydatetime()
+            ts = _pd.Timestamp(val)
+            # pd.NaT.to_pydatetime() doesn't raise but returns NaT, which
+            # then fails on .strftime() — check isna() before converting.
+            if _pd.isna(ts):
+                return ""
+            dt = ts.to_pydatetime()
         except Exception:
             pass
 
