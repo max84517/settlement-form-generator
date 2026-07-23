@@ -30,6 +30,7 @@ _SETTLEMENT_INFO_COLS = [
     "ICMInternalSignatoryTitle",
     "ICMSRAgreementEffectiveDate",
     "ICMSRAGREEMENTCODE",
+    "CW#",
 ]
 
 
@@ -40,7 +41,14 @@ def load_settlement_info(path: str | Path) -> pd.DataFrame:
 
     missing = [c for c in _SETTLEMENT_INFO_COLS if c not in df.columns]
     if missing:
-        raise ValueError(f"Settlement info Excel is missing columns: {missing}")
+        # CW# is optional — warn but don't crash if not yet in the file
+        optional = {"CW#"}
+        required_missing = [c for c in missing if c not in optional]
+        if required_missing:
+            raise ValueError(f"Settlement info Excel is missing columns: {required_missing}")
+        # Add the optional column as empty so the rest of the pipeline works
+        for col in missing:
+            df[col] = ""
 
     df = df[_SETTLEMENT_INFO_COLS].copy()
     df.dropna(how="all", inplace=True)

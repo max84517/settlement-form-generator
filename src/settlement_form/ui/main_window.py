@@ -391,27 +391,33 @@ class MainWindow(ctk.CTk):
                         # Reload data to reflect status change
                         self.after(0, lambda: self._load_excel(excel_path))
 
-                self.after(0, lambda: self._on_generate_done(out_paths, None))
+                missing = contract_generator.check_missing_fields(merged_df)
+                self.after(0, lambda: self._on_generate_done(out_paths, None, missing))
             except Exception as exc:
-                self.after(0, lambda: self._on_generate_done([], exc))
+                self.after(0, lambda: self._on_generate_done([], exc, {}))
 
         threading.Thread(target=_run, daemon=True).start()
 
-    def _on_generate_done(self, out_paths: list, error: Exception | None) -> None:
+    def _on_generate_done(
+        self,
+        out_paths: list,
+        error: Exception | None,
+        missing_fields: dict,
+    ) -> None:
         self._gen_btn.configure(state="normal", text="Generate Consolidate Settlements")
 
         if error:
             messagebox.showerror("Generation Error", str(error))
             return
 
-        if out_paths:
-            folder = str(Path(out_paths[0]).parent)
-            messagebox.showinfo(
-                "Done",
-                f"Generated {len(out_paths)} contract(s).\n\nOutput folder:\n{folder}",
-            )
-        else:
+        if not out_paths:
             messagebox.showwarning("No Contracts", "No contracts were generated.")
+            return
+
+        folder = str(Path(out_paths[0]).parent)
+
+        # ── Missing-fields summary popup ───────────────────────────────
+        _MissingFieldsDialog(self, out_paths, folder, missing_fields)
 
     # ------------------------------------------------------------------
     # Close
@@ -439,3 +445,102 @@ class MainWindow(ctk.CTk):
     def _on_close(self) -> None:
         self._save_state()
         self.destroy()
+
+
+# ---------------------------------------------------------------------------
+# Post-generation summary dialog
+# ---------------------------------------------------------------------------
+
+class _MissingFieldsDialog(ctk.CTkToplevel):
+    """
+    Shows after generation:
+      • If all fields are complete → green tick + contract count + output path
+      • If any supplier has empty fields → lists them in a scrollable area
+    """
+
+    def __init__(
+        self,
+        master: ctk.CTk,
+        out_paths: list,
+        output_folder: str,
+        missing_fields: dict,   # {supplier_key: [field, ...]}
+    ) -> None:
+        super().__init__(master)
+        self.title("Generation Complete")
+        self.resizable(False, False)
+        self.grab_set()
+        self.lift()
+
+        self._build(out_paths, output_folder, missing_fields)
+        self._center()
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
+
+    def _build(self, out_paths, folder, missing_fields):
+        n = len(out_paths)
+
+        # ── Header ────────────────────────────────────────────────────
+        if missing_fields:
+            icon, color = "⚠", "orange"
+            headline = f"Generated {n} contract(s) — some fields are empty"
+        else:
+            icon, color = "✓", "#2ecc71"
+            headline = f"Generated {n} contract(s) — all fields complete"
+
+        ctk.CTkLabel(
+            self,
+            text=f"{icon}  {headline}",
+            text_color=color,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            anchor="w",
+        ).pack(fill="x", padx=20, pady=(16, 4))
+
+        ctk.CTkLabel(
+            self,
+            text=f"Output folder:  {folder}",
+            anchor="w",
+            wraplength=460,
+        ).pack(fill="x", padx=20, pady=(0, 8))
+
+        # ── Missing fields list ────────────────────────────────────────
+        if missing_fields:
+            ctk.CTkLabel(
+                self,
+                text="Suppliers with missing / empty fields:",
+                anchor="w",
+                font=ctk.CTkFont(weight="bold"),
+            ).pack(fill="x", padx=20, pady=(4, 2))
+
+            scroll = ctk.CTkScrollableFrame(
+                self,
+                height=min(240, len(missing_fields) * 52 + 16),
+                width=480,
+            )
+            scroll.pack(fill="both", expand=True, padx=20, pady=(0, 8))
+
+            for supplier, fields in sorted(missing_fields.items()):
+                row = ctk.CTkFrame(scroll, fg_color=("gray85", "gray20"), corner_radius=4)
+                row.pack(fill="x", pady=3, padx=2)
+                ctk.CTkLabel(
+                    row,
+                    text=supplier,
+                    font=ctk.CTkFont(weight="bold"),
+                    anchor="w",
+                ).pack(fill="x", padx=8, pady=(4, 0))
+                ctk.CTkLabel(
+                    row,
+                    text="Missing: " + ", ".join(fields),
+                    text_color="orange",
+                    anchor="w",
+                    wraplength=440,
+                ).pack(fill="x", padx=8, pady=(0, 4))
+
+        # ── Close button ───────────────────────────────────────────────
+        ctk.CTkButton(self, text="Close", width=120, command=self.destroy).pack(
+            pady=(4, 16)
+        )
+
+    def _center(self):
+        self.update_idletasks()
+        w, h = self.winfo_width(), self.winfo_height()
+        sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        self.geometry(f"+{(sw - w) // 2}+{(sh - h) // 2}")

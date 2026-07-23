@@ -38,6 +38,7 @@ _ICM_FIELDS = [
     "ICMInternalSignatoryTitle",
     "ICMExternalSignatory",
     "ICMExternalSignatoryTitle",
+    "CW#",
 ]
 
 # Map template keywords → DataFrame column names
@@ -53,6 +54,7 @@ _KEYWORD_MAP: dict[str, str] = {
     "ICMInternalSignatoryTitle": "ICMInternalSignatoryTitle",
     "ICMExternalSignatory":      "ICMExternalSignatory",
     "ICMExternalSignatoryTitle": "ICMExternalSignatoryTitle",
+    "CW#":                       "CW#",
 }
 
 
@@ -399,6 +401,41 @@ def _make_output_dir(output_folder: str | Path) -> Path:
 def _safe_filename(name: str) -> str:
     """Remove characters that are invalid in Windows filenames."""
     return re.sub(r'[\\/:*?"<>|]', "_", name)
+
+
+# Fields that must be non-empty for a complete contract
+_REQUIRED_FIELDS = [
+    "ICMAgreementCode",
+    "ICMPartyName1",
+    "ICMSRAGREEMENTCODE",
+    "ICMSRAgreementEffectiveDate",
+    "ICMEffectiveDate",
+    "ICMInternalSignatory",
+    "ICMInternalSignatoryTitle",
+    "ICMExternalSignatory",
+    "ICMExternalSignatoryTitle",
+    "CW#",
+]
+
+
+def check_missing_fields(df: pd.DataFrame) -> dict[str, list[str]]:
+    """
+    Return a dict mapping supplier_key → list of empty required fields.
+    Only suppliers that have at least one missing field are included.
+    An empty dict means all data is complete.
+    """
+    result: dict[str, list[str]] = {}
+    for supplier_key, group in df.groupby("_supplier_key", sort=False):
+        first = group.iloc[0]
+        missing = [
+            col for col in _REQUIRED_FIELDS
+            if col in df.columns and (
+                pd.isna(first[col]) or str(first[col]).strip() == ""
+            )
+        ]
+        if missing:
+            result[str(supplier_key)] = missing
+    return result
 
 
 def generate_contracts(
