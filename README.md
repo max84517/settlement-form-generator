@@ -12,20 +12,23 @@ Built with Python 3.11+, Poetry, customtkinter (dark mode), and python-docx.
 1. Go to [Releases](https://github.com/max84517/settlement-form-generator/releases/latest) and download `SettlementFormGenerator-v*.zip`
 2. **Extract to a local folder** (avoid OneDrive / network paths — spaces in the path can cause issues)
 3. Run `SettlementFormGenerator\SettlementFormGenerator.exe`
-4. The `data\` folder ships with the Word template and settlement info pre-loaded
+4. On first launch, create a user profile (just enter a name). All settings are saved per user in a single `config.json` — ideal for shared OneDrive folders where multiple people use the same installation.
 
 ---
 
 ## Features
 
+- **Multi-user profiles** – on startup, select or create a user profile; each user's paths and settings are saved independently in a single `config.json`
 - **Filter & preview** settlement data by Sub-Category and Status before generating
 - **Chicony split** – automatically separates Chicony NB / DT into distinct contracts
 - **iCertis code entry** – modal dialog collects one iCertis code per supplier before generation
 - **FY/Quarter picker** – aware of HP's fiscal calendar (Q1 = Nov–Jan, Q2 = Feb–Apr, Q3 = May–Jul, Q4 = Aug–Oct)
-- **Keyword replacement** – plain-text keywords anywhere in the Word template (body, text boxes, headers/footers, content controls) are replaced case-insensitively
-- **Table auto-fill** – platform/amount rows are inserted into the contract table; total row added automatically
+- **Keyword replacement** – plain-text keywords anywhere in the Word template (body, text boxes, headers/footers, content controls) are replaced case-insensitively; longest keyword matched first (prevents substring collisions)
+- **Table auto-fill** – platform/amount rows inserted into the contract table with a bold Total row; works even when the table is inside a Word content control (SDT)
+- **Missing-fields summary** – post-generation popup lists any suppliers with empty required fields
+- **Open Output Folder** button – opens the most recent timestamped output folder directly
 - **Status update** – optionally writes "Contract Generated" back to the source Excel after generation
-- **Persistent UI state** – last paths, filter selections, and checkboxes are restored on relaunch via `config.json`
+- **Supplier name normalisation** – case and spacing variants (e.g. `Liteon` / `LiteOn`) are treated as one supplier
 
 ---
 
