@@ -1,13 +1,19 @@
 """
-Per-user config persistence.
+Single-file config: all users and their settings in one config.json.
 
-Each user gets their own  config_<name>.json  at the app root.
-A shared  users.json  stores the user list and remembers the last login.
+Structure:
+{
+  "users": ["Alice", "Bob"],
+  "last_user": "Alice",
+  "configs": {
+    "Alice": { "input_excel_path": "...", ... },
+    "Bob":   { "input_excel_path": "...", ... }
+  }
+}
 """
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 from typing import Any
 
@@ -25,49 +31,13 @@ _DEFAULTS: dict[str, Any] = {
     "output_folder": "",
 }
 
-# ── User list ────────────────────────────────────────────────────────────────
 
-def _users_path() -> Path:
-    return get_app_root() / "users.json"
-
-
-def load_users() -> list[str]:
-    p = _users_path()
-    if p.exists():
-        try:
-            data = json.loads(p.read_text(encoding="utf-8"))
-            return data.get("users", [])
-        except (json.JSONDecodeError, OSError):
-            pass
-    return []
+def _config_path() -> Path:
+    return get_app_root() / "config.json"
 
 
-def save_users(users: list[str]) -> None:
-    existing = _load_users_raw()
-    existing["users"] = users
-    _users_path().write_text(json.dumps(existing, indent=2, ensure_ascii=False),
-                             encoding="utf-8")
-
-
-def get_last_user() -> str:
-    p = _users_path()
-    if p.exists():
-        try:
-            return json.loads(p.read_text(encoding="utf-8")).get("last_user", "")
-        except (json.JSONDecodeError, OSError):
-            pass
-    return ""
-
-
-def set_last_user(username: str) -> None:
-    data = _load_users_raw()
-    data["last_user"] = username
-    _users_path().write_text(json.dumps(data, indent=2, ensure_ascii=False),
-                             encoding="utf-8")
-
-
-def _load_users_raw() -> dict:
-    p = _users_path()
+def _load_all() -> dict:
+    p = _config_path()
     if p.exists():
         try:
             return json.loads(p.read_text(encoding="utf-8"))
@@ -76,42 +46,55 @@ def _load_users_raw() -> dict:
     return {}
 
 
-# ── Per-user config ──────────────────────────────────────────────────────────
-
-def _safe_name(username: str) -> str:
-    """Strip characters that are invalid in filenames."""
-    return re.sub(r'[\\/:*?"<>|]', "_", username.strip())
-
-
-def _config_path(username: str) -> Path:
-    return get_app_root() / f"config_{_safe_name(username)}.json"
+def _save_all(data: dict) -> None:
+    _config_path().write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
-def load(username: str = "") -> dict[str, Any]:
-    path = _config_path(username) if username else get_app_root() / "config.json"
-    if path.exists():
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            return {**_DEFAULTS, **data}
-        except (json.JSONDecodeError, OSError):
-            pass
-    return dict(_DEFAULTS)
+# ── User list ────────────────────────────────────────────────────────────────
+
+def load_users() -> list[str]:
+    return _load_all().get("users", [])
 
 
-def save(data: dict[str, Any], username: str = "") -> None:
-    path = _config_path(username) if username else get_app_root() / "config.json"
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+def save_users(users: list[str]) -> None:
+    data = _load_all()
+    data["users"] = users
+    _save_all(data)
+
+
+def get_last_user() -> str:
+    return _load_all().get("last_user", "")
+
+
+def set_last_user(username: str) -> None:
+    data = _load_all()
+    data["last_user"] = username
+    _save_all(data)
 
 
 def delete_user(username: str) -> None:
-    """Remove a user's config file and entry from the user list."""
-    cfg = _config_path(username)
-    if cfg.exists():
-        cfg.unlink()
-    users = load_users()
-    if username in users:
-        users.remove(username)
-        save_users(users)
-    # Clear last_user if it was this user
-    if get_last_user() == username:
-        set_last_user("")
+    data = _load_all()
+    if username in data.get("users", []):
+        data["users"].remove(username)
+    data.get("configs", {}).pop(username, None)
+    if data.get("last_user") == username:
+        data["last_user"] = ""
+    _save_all(data)
+
+
+# ── Per-user config ──────────────────────────────────────────────────────────
+
+def load(username: str = "") -> dict[str, Any]:
+    data = _load_all()
+    user_cfg = data.get("configs", {}).get(username, {})
+    return {**_DEFAULTS, **user_cfg}
+
+
+def save(cfg: dict[str, Any], username: str = "") -> None:
+    data = _load_all()
+    if "configs" not in data:
+        data["configs"] = {}
+    data["configs"][username] = cfg
+    _save_all(data)

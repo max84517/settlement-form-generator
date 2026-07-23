@@ -16,10 +16,8 @@ build/
 # Poetry lock is committed; ignore only the local config
 poetry.toml
 
-# App runtime config (stores user paths / UI state)
+# App runtime config (stores all users and their settings)
 config.json
-config_*.json
-users.json
 
 # ── Data folders ────────────────────────────────────────────────────────────
 # Keep the folder structure but ignore generated/user files inside them
