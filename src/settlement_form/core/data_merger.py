@@ -64,36 +64,47 @@ def merge_data(
     Matching rules:
       - Chicony:     match on GTK Supplier + normalised GBU (_gbu_norm)
       - All others:  match on GTK Supplier only
+    Matching is case-insensitive and ignores all spaces.
     """
+    def _key(s: str) -> str:
+        """Normalise supplier name: lowercase + remove all spaces."""
+        return str(s).lower().replace(" ", "")
+
     df = filtered_df.copy()
 
-    # ---------- join settlement info ----------
-    # Split into Chicony rows vs. the rest for separate join strategies
-    chicony_mask = df["GTK Supplier"].str.lower() == "chicony"
+    # Add a normalised key column for joining
+    df["_sup_key"] = df["GTK Supplier"].apply(_key)
+    settlement_info = settlement_info.copy()
+    settlement_info["_sup_key"] = settlement_info["GTK Supplier"].apply(_key)
 
-    # --- non-Chicony: join on GTK Supplier only ---
+    # ---------- join settlement info ----------
+    chicony_mask = df["_sup_key"] == _key("chicony")
+
+    # --- non-Chicony: join on normalised supplier key ---
     non_chicony = df[~chicony_mask].copy()
     si_non_chicony = settlement_info[
-        settlement_info["GTK Supplier"].str.lower() != "chicony"
-    ].drop_duplicates(subset=["GTK Supplier"]).drop(columns=["GBU", "Sub-Category"])
+        settlement_info["_sup_key"] != _key("chicony")
+    ].drop_duplicates(subset=["_sup_key"]).drop(columns=["GBU", "Sub-Category", "GTK Supplier"])
 
     non_chicony_merged = non_chicony.merge(
-        si_non_chicony, on="GTK Supplier", how="left"
+        si_non_chicony, on="_sup_key", how="left"
     )
 
-    # --- Chicony: join on GTK Supplier + normalised GBU ---
+    # --- Chicony: join on normalised supplier key + normalised GBU ---
     chicony = df[chicony_mask].copy()
     si_chicony = settlement_info[
-        settlement_info["GTK Supplier"].str.lower() == "chicony"
-    ].drop_duplicates(subset=["GTK Supplier", "GBU"]).drop(columns=["Sub-Category"])
-    # Rename settlement info GBU to join on _gbu_norm
+        settlement_info["_sup_key"] == _key("chicony")
+    ].drop_duplicates(subset=["_sup_key", "GBU"]).drop(columns=["Sub-Category", "GTK Supplier"])
     si_chicony = si_chicony.rename(columns={"GBU": "_gbu_norm"})
 
     chicony_merged = chicony.merge(
-        si_chicony, on=["GTK Supplier", "_gbu_norm"], how="left"
+        si_chicony, on=["_sup_key", "_gbu_norm"], how="left"
     )
 
     merged = pd.concat([non_chicony_merged, chicony_merged], ignore_index=True)
+
+    # Drop the temporary join key
+    merged.drop(columns=["_sup_key"], inplace=True, errors="ignore")
 
     # ---------- add computed columns ----------
     merged["ICMAgreementCode"] = merged["_supplier_key"].map(icertis_codes).fillna("")
