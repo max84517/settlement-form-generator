@@ -32,13 +32,15 @@ _STATUS_2ND_VER = "2nd Ver Complete"
 
 
 class MainWindow(ctk.CTk):
-    def __init__(self) -> None:
+    def __init__(self, username: str = "") -> None:
         super().__init__()
-        self.title("Settlement Form Generator")
+        self._username = username
+        title = f"Settlement Form Generator — {username}" if username else "Settlement Form Generator"
+        self.title(title)
         self.geometry("840x580")
         self.minsize(760, 480)
 
-        self._cfg = settings.load()
+        self._cfg = settings.load(self._username)
         self._raw_df: pd.DataFrame | None = None
         self._filtered_df: pd.DataFrame | None = None
 
@@ -178,7 +180,7 @@ class MainWindow(ctk.CTk):
         self._cfg["status_selection"] = self._status_widget.get_selected()
         self._cfg["select_all"] = self._select_all_var.get()
         self._cfg["turn_status_flag"] = self._turn_status_var.get()
-        settings.save(self._cfg)
+        settings.save(self._cfg, self._username)
 
     # ------------------------------------------------------------------
     # Excel loading
@@ -318,7 +320,7 @@ class MainWindow(ctk.CTk):
                 if not si_path:
                     return
                 self._cfg["settlement_info_path"] = si_path
-                settings.save(self._cfg)
+                settings.save(self._cfg, self._username)
 
         try:
             settlement_info = data_merger.load_settlement_info(si_path)
