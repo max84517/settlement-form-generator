@@ -378,6 +378,9 @@ def _build_replacements(group: pd.DataFrame) -> dict[str, str]:
             elif col == "ICMSRAgreementEffectiveDate":
                 # Format as 'MMM D, YYYY'
                 replacements[keyword] = _to_date_str(raw)
+            elif col == "ICMAgreementCode":
+                # First letter uppercase, rest lowercase
+                replacements[keyword] = str(raw).capitalize()
             else:
                 replacements[keyword] = str(raw)
 
