@@ -362,7 +362,7 @@ def _to_date_str(val: Any) -> str:
     if dt is None:
         return str(val).strip()
 
-    return f"{dt.strftime('%b')} {dt.day}, {dt.strftime('%Y')}"
+    return f"{dt.strftime('%B')} {dt.day}, {dt.strftime('%Y')}"
 
 
 def _build_replacements(group: pd.DataFrame) -> dict[str, str]:
