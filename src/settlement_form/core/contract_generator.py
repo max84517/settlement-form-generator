@@ -111,6 +111,19 @@ def _set_run_text(run_elem: Any, text: str) -> None:
         t.text = ""
 
 
+def _strip_caps_from_run(run_elem: Any) -> None:
+    """
+    Remove <w:caps/> and <w:smallCaps/> from a run's properties so that
+    the replacement value is displayed in its own case (not forced to ALL CAPS).
+    """
+    rpr = run_elem.find(qn("w:rPr"))
+    if rpr is None:
+        return
+    for tag in (qn("w:caps"), qn("w:smallCaps")):
+        for elem in rpr.findall(tag):
+            rpr.remove(elem)
+
+
 def _replace_in_p_element(p_elem: Any, replacements: dict[str, str]) -> None:
     """
     Replace keywords inside a single <w:p> XML element.
@@ -151,6 +164,7 @@ def _replace_in_p_element(p_elem: Any, replacements: dict[str, str]) -> None:
                     flags=re.IGNORECASE,
                 )
                 _set_run_text(run, new_rt)
+                _strip_caps_from_run(run)
                 replaced_in_single = True
                 break
 
@@ -165,6 +179,7 @@ def _replace_in_p_element(p_elem: Any, replacements: dict[str, str]) -> None:
             flags=re.IGNORECASE,
         )
         _set_run_text(runs[0], new_full)
+        _strip_caps_from_run(runs[0])
         for run in runs[1:]:
             for t in run.findall(qn("w:t")):
                 t.text = ""
