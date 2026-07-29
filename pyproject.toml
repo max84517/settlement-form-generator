@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "settlement-form-generator"
-version = "0.3.2"
+version = "0.3.3"
 description = "Automatically generate Word settlement contracts from Excel data"
 authors = []
 packages = [{ include = "settlement_form", from = "src" }]
