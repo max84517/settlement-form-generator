@@ -70,7 +70,9 @@ def load_input_excel(path: str | Path) -> pd.DataFrame:
     canonical_map: dict[str, str] = {}
     for raw, norm in zip(supplier_raw, norm_series):
         if norm not in canonical_map:
-            canonical_map[norm] = raw
+            # Remove internal spaces + first-letter-upper-rest-lower
+            # e.g. "Lite on" → "Liteon", "LiteOn" → "Liteon", "LITEON" → "Liteon"
+            canonical_map[norm] = raw.replace(" ", "").capitalize()
     df["_canonical_supplier"] = norm_series.map(canonical_map)
 
     # Replace GTK Supplier with the canonical form so that casing variants
