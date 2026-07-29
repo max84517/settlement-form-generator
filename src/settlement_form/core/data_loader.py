@@ -73,6 +73,10 @@ def load_input_excel(path: str | Path) -> pd.DataFrame:
             canonical_map[norm] = raw
     df["_canonical_supplier"] = norm_series.map(canonical_map)
 
+    # Replace GTK Supplier with the canonical form so that casing variants
+    # ("LiteOn" vs "Liteon") don't create separate contract groups later.
+    df["GTK Supplier"] = df["_canonical_supplier"]
+
     # Build a supplier key that already accounts for Chicony NB/DT split
     df["_supplier_key"] = df.apply(_build_supplier_key, axis=1)
 
