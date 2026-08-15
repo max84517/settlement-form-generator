@@ -1,7 +1,7 @@
 """
 DataTable – a scrollable table widget that displays settlement rows.
 
-Columns: [checkbox] Sub-Category | GTK Supplier | Platform | Actual Payment
+Columns: [checkbox] Sub-Category | GTK Supplier | Platform | Status | Actual Payment
 
 The checkbox column is only visible when select_mode=True.
 When select_mode=False all rows are treated as selected.
@@ -14,8 +14,8 @@ import customtkinter as ctk
 import pandas as pd
 
 
-_HEADERS = ["Sub-Category", "GTK Supplier", "Platform", "Actual Payment"]
-_COL_WIDTHS = [130, 130, 190, 100]
+_HEADERS = ["Sub-Category", "GTK Supplier", "Platform", "Status", "Actual Payment"]
+_COL_WIDTHS = [120, 120, 170, 150, 100]
 
 
 class DataTable(ctk.CTkFrame):
@@ -109,6 +109,7 @@ class DataTable(ctk.CTkFrame):
                 str(row_data.get("Sub-Category", "")),
                 str(row_data.get("GTK Supplier", "")),
                 str(row_data.get("Platform", "")),
+                str(row_data.get("Status", "")),
                 f"${float(row_data.get('Actual Payment', 0)):,.2f}",
             ]
             for col_idx, (val, width) in enumerate(zip(values, _COL_WIDTHS)):
