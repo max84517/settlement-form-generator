@@ -221,6 +221,32 @@ class MainWindow(ctk.CTk):
 
         self._apply_filters()
 
+    def _refresh_data(self) -> None:
+        """Re-read the Excel and refresh the table, preserving current filter selections."""
+        path = self._excel_var.get()
+        if not path or not Path(path).exists():
+            return
+        try:
+            df = data_loader.load_input_excel(path)
+        except Exception:
+            return
+
+        self._raw_df = df
+
+        # Update option lists while keeping current selections intact
+        current_subcats = self._subcat_widget.get_selected()
+        self._subcat_widget.set_options(
+            data_loader.get_unique_subcategories(df),
+            selected=current_subcats,
+        )
+        current_statuses = self._status_widget.get_selected()
+        self._status_widget.set_options(
+            data_loader.get_unique_statuses(df),
+            selected=current_statuses,
+        )
+
+        self._apply_filters()
+
     # ------------------------------------------------------------------
     # Filtering
     # ------------------------------------------------------------------
@@ -390,8 +416,8 @@ class MainWindow(ctk.CTk):
                         contract_generator.update_status_in_excel(
                             excel_path, self._raw_df, process_df
                         )
-                        # Reload data to reflect status change
-                        self.after(0, lambda: self._load_excel(excel_path))
+                        # Refresh table without resetting filter selections
+                        self.after(0, self._refresh_data)
 
                 missing = contract_generator.check_missing_fields(merged_df)
                 self.after(0, lambda: self._on_generate_done(out_paths, None, missing))
