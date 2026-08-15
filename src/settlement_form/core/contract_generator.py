@@ -514,7 +514,7 @@ def update_status_in_excel(
     """
     excel_path = Path(excel_path)
     wb = openpyxl.load_workbook(excel_path)
-    ws = wb.active
+    ws = wb["Data"] if "Data" in wb.sheetnames else wb.active
 
     # Find the header row (row 1) and locate the Status column index
     header = {
