@@ -530,19 +530,21 @@ def update_status_in_excel(
     if not all([status_col, supplier_col, platform_col, subcat_col]):
         raise ValueError("Could not find required columns in source Excel.")
 
-    # Build a set of (supplier, platform, sub-category) tuples to update
+    def _norm(s: str) -> str:
+        return s.lower().replace(" ", "")
+
     processed_set: set[tuple[str, str, str]] = set()
     for _, row in processed_df.iterrows():
         processed_set.add((
-            str(row.get("GTK Supplier", "")).strip(),
-            str(row.get("Platform", "")).strip(),
-            str(row.get("Sub-Category", "")).strip(),
+            _norm(str(row.get("GTK Supplier", ""))),
+            _norm(str(row.get("Platform", ""))),
+            _norm(str(row.get("Sub-Category", ""))),
         ))
 
     for row in ws.iter_rows(min_row=2):
-        supplier = str(row[supplier_col - 1].value or "").strip()
-        platform = str(row[platform_col - 1].value or "").strip()
-        subcat   = str(row[subcat_col - 1].value or "").strip()
+        supplier = _norm(str(row[supplier_col - 1].value or ""))
+        platform = _norm(str(row[platform_col - 1].value or ""))
+        subcat   = _norm(str(row[subcat_col - 1].value or ""))
         if (supplier, platform, subcat) in processed_set:
             row[status_col - 1].value = "Contract Generated"
 
