@@ -115,7 +115,19 @@ def merge_data(
     merged.drop(columns=["_sup_key"], inplace=True, errors="ignore")
 
     # ---------- add computed columns ----------
-    merged["ICMAgreementCode"] = merged["_supplier_key"].map(icertis_codes).fillna("")
+    # Suppliers with multiple Sub-Categories get their iCertis code looked up
+    # by "Supplier - SubCategory" composite key; single-subcat suppliers by name.
+    subcat_counts = merged.groupby("_supplier_key")["Sub-Category"].nunique()
+    multi_subcat: set = set(subcat_counts[subcat_counts > 1].index)
+
+    def _get_code(row: pd.Series) -> str:
+        supplier = str(row["_supplier_key"]).strip()
+        sub_cat  = str(row.get("Sub-Category", "")).strip()
+        if supplier in multi_subcat:
+            return icertis_codes.get(f"{supplier} - {sub_cat}", "")
+        return icertis_codes.get(supplier, "")
+
+    merged["ICMAgreementCode"] = merged.apply(_get_code, axis=1)
     merged["ICMEffectiveDate"] = effective_date
 
     return merged

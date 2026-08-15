@@ -125,17 +125,32 @@ class IcertisDialog(ctk.CTkToplevel):
 
 def collect_supplier_keys(df: pd.DataFrame) -> list[str]:
     """
-    Extract unique supplier keys from the filtered DataFrame,
-    preserving the Chicony NB/DT split.
+    Return display keys for the iCertis dialog.
 
-    For Chicony: one entry per distinct _gbu_norm value present in the data.
-    For others: one entry per distinct GTK Supplier value.
+    Suppliers with a single Sub-Category: "LiteOn"
+    Suppliers with multiple Sub-Categories: "LiteOn - Keyboard", "LiteOn - Thermal"
+    Chicony always split by GBU: "Chicony - NB", "Chicony - DT"
     """
+    # Suppliers that have >1 distinct Sub-Category in the current selection
+    subcat_counts = (
+        df.groupby("_supplier_key")["Sub-Category"]
+        .nunique()
+    )
+    multi_subcat: set[str] = set(subcat_counts[subcat_counts > 1].index)
+
     keys: list[str] = []
     seen: set[str] = set()
 
     for _, row in df.iterrows():
-        key = str(row.get("_supplier_key", "")).strip()
+        supplier = str(row.get("_supplier_key", "")).strip()
+        sub_cat  = str(row.get("Sub-Category", "")).strip()
+
+        # Chicony already has NB/DT baked into _supplier_key; treat like multi-subcat
+        if supplier in multi_subcat:
+            key = f"{supplier} - {sub_cat}"
+        else:
+            key = supplier
+
         if key and key not in seen:
             seen.add(key)
             keys.append(key)
