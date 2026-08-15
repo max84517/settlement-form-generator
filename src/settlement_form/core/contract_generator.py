@@ -474,10 +474,19 @@ def generate_contracts(
     groups = group_by_contract(df)
     output_paths: list[Path] = []
 
+    # Count groups per (supplier_key, icm_code) to detect multi-Sub-Category suppliers
+    from collections import Counter
+    supplier_code_count: Counter = Counter()
+    for g in groups:
+        f = g.iloc[0]
+        supplier_code_count[(str(f.get("_supplier_key", "")),
+                              str(f.get("ICMAgreementCode", "")).strip())] += 1
+
     for group in groups:
         first = group.iloc[0]
         supplier_key = str(first.get("_supplier_key", "Unknown"))
         icm_code = str(first.get("ICMAgreementCode", "")).strip()
+        sub_cat = str(first.get("Sub-Category", "")).strip()
 
         doc = Document(template_path)
         replacements = _build_replacements(group)
@@ -486,10 +495,13 @@ def generate_contracts(
         platform_rows = _get_platform_rows(group)
         fill_platform_table(doc, platform_rows)
 
-        # Build filename
         safe_supplier = _safe_filename(supplier_key)
         safe_code = _safe_filename(icm_code) if icm_code else "NO_CODE"
-        filename = f"SETTLEMENT AND RELEASE AGREEMENT_{safe_supplier}_{safe_code}.docx"
+        # Include Sub-Category in filename only when the supplier has multiple Sub-Categories
+        if supplier_code_count[(supplier_key, icm_code)] > 1:
+            filename = f"SETTLEMENT AND RELEASE AGREEMENT_{safe_supplier}_{safe_code}_{_safe_filename(sub_cat)}.docx"
+        else:
+            filename = f"SETTLEMENT AND RELEASE AGREEMENT_{safe_supplier}_{safe_code}.docx"
         out_path = out_dir / filename
         doc.save(out_path)
         output_paths.append(out_path)
