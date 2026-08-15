@@ -19,16 +19,17 @@ Built with Python 3.11+, Poetry, customtkinter (dark mode), and python-docx.
 ## Features
 
 - **Multi-user profiles** – on startup, select or create a user profile; each user's paths and settings are saved independently in a single `config.json`
-- **Filter & preview** settlement data by Sub-Category and Status before generating
+- **Filter & preview** settlement data by Sub-Category and Status before generating; Status column visible in the data table
+- **Multi-Sub-Category support** – when a supplier has data in multiple Sub-Categories, the iCertis dialog asks for a separate code per Sub-Category and generates a separate contract for each
 - **Chicony split** – automatically separates Chicony NB / DT into distinct contracts
-- **iCertis code entry** – modal dialog collects one iCertis code per supplier before generation
+- **iCertis code entry** – modal dialog collects one iCertis code per supplier (or per Sub-Category when applicable) before generation
 - **FY/Quarter picker** – aware of HP's fiscal calendar (Q1 = Nov–Jan, Q2 = Feb–Apr, Q3 = May–Jul, Q4 = Aug–Oct)
-- **Keyword replacement** – plain-text keywords anywhere in the Word template (body, text boxes, headers/footers, content controls) are replaced case-insensitively; longest keyword matched first (prevents substring collisions)
+- **Keyword replacement** – plain-text keywords anywhere in the Word template (body, text boxes, headers/footers, content controls) are replaced case-insensitively; ALL CAPS formatting stripped from replaced runs; longest keyword matched first
 - **Table auto-fill** – platform/amount rows inserted into the contract table with a bold Total row; works even when the table is inside a Word content control (SDT)
 - **Missing-fields summary** – post-generation popup lists any suppliers with empty required fields
 - **Open Output Folder** button – opens the most recent timestamped output folder directly
-- **Status update** – optionally writes "Contract Generated" back to the source Excel after generation
-- **Supplier name normalisation** – case and spacing variants (e.g. `Liteon` / `LiteOn`) are treated as one supplier
+- **Status update** – optionally writes "Contract Generated" back to the source Excel (`Data` sheet) after generation; filter selections are preserved after the refresh
+- **Supplier name normalisation** – case and spacing variants (`Liteon` / `LiteOn` / `Lite on`) are always consolidated into one canonical supplier name
 
 ---
 
